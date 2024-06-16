@@ -1,26 +1,26 @@
 import { useEffect, useState } from "react"
 import { io } from 'socket.io-client'
-const socketIO = io()
+
 
 export default function Chat({ myName = "Lombo" }) {
-    const [socket, setSocket] = useState(socketIO)
+    const [socketIO, setSocketIO] = useState(io())
     const [msgs, setMsgs] = useState([])//['hello, good morning', 'how are u?', "good, and you?"])
     const [rooms, setRooms] = useState(['room1', 'room2', 'room3'])
 
     const [room, setRoom] = useState(rooms[0])
     const [inp, setInp] = useState('')
     useEffect(() => {
-        setSocket(io('http://localhost:2500'))
-    }, [])
-    useEffect(() => {
-
-        socket.on('join', (data) => {
-            console.log(data);
+        const socket = io('http://localhost:2500')
+        
+        socket.on('welcome', (data) => {
+            console.log('welcome to chat, your id:', data);
         })
         socket.on('msg-server', (msg) => {
             setMsgs(prev => [...prev, msg])
         })
-    }, [socket])
+
+        setSocketIO(socket)
+    }, [])
 
     const handleRoom = (r) => {
         if (room!=r) {
