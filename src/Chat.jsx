@@ -1,8 +1,9 @@
+import axios from "axios"
 import { useEffect, useState } from "react"
 import { io } from 'socket.io-client'
 
 
-export default function Chat({ myName = "Lombo" }) {
+export default function Chat({ userName = "Anonymous" }) {
     const [socketIO, setSocketIO] = useState(io())
     const [msgs, setMsgs] = useState([])//['hello, good morning', 'how are u?', "good, and you?"])
     const [rooms, setRooms] = useState(['room1', 'room2', 'room3'])
@@ -10,8 +11,8 @@ export default function Chat({ myName = "Lombo" }) {
     const [room, setRoom] = useState(rooms[0])
     const [inp, setInp] = useState('')
     useEffect(() => {
-        const socket = io('http://localhost:2500')
-        
+        const socket = io('http://localhost:2500', { query: userName })
+
         socket.on('welcome', (data) => {
             console.log('welcome to chat, your id:', data);
         })
@@ -19,15 +20,34 @@ export default function Chat({ myName = "Lombo" }) {
             setMsgs(prev => [...prev, msg])
         })
 
+        socket.emit("join", userName)
+        // ######## server-side ###########
+        // socket.on('join', (userName) => {
+        //     users[socket.id] = userName
+        // })
+        // ##################################
         setSocketIO(socket)
     }, [])
 
+
+
     const handleRoom = (r) => {
-        if (room!=r) {
-            setRoom(r)
-            setMsgs([])
-        }
+
+        axios.get('http://localhost:2500/room/roomName')
+            .then(r => {
+                if (r.data) {
+                    socketIO.emit("add-room", roomName)
+                    return;
+                }
+                // setErrorMsgRoom("bla bla bla")
+            })
     }
+
+    // if (room != r) {
+    //     setRoom(r)
+    //     setMsgs([])
+    // }
+
 
     const handleSend = () => {
         if (inp) socket.emit('new-msg-client', inp)
@@ -35,12 +55,12 @@ export default function Chat({ myName = "Lombo" }) {
     }
     return (
         <div>
-            {myName}, welcome!
+            {userName}, welcome!
 
             <div>
                 <div>
                     <h2>Rooms</h2>
-                    {rooms.map(r => <div key={r} onClick={()=>handleRoom(r)}>{r}</div>)}
+                    {rooms.map(r => <div key={r} onClick={() => handleRoom(r)}>{r}</div>)}
 
                 </div>
                 <div>
